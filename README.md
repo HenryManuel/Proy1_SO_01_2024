@@ -1,9 +1,9 @@
 # Información del Proyecto MiniShell
 
 ## Datos Personales
-- **Nombres:**  [Henry Manuel]
-- **Apellidos:** [Arteaga Goncalves]
-- **Cédula de Identidad:** [26921110]
+- **Nombres:**  [Henry Manuel] [Miguel Angel]
+- **Apellidos:** [Arteaga Goncalves] [Ciavato Monsalve]
+- **Cédula de Identidad:** [26921110] [30541929]
 ---
 
 ## Pasos de Compilación y Ejecución
