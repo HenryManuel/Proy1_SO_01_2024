@@ -19,4 +19,7 @@
     ./minishell
 ---
 
+## Enlace a la documentación del proyecto
+https://docs.google.com/document/d/16SglF8ReC0KcAlWZx_FNIUrN0rGmMqyfL6Ihao4cTa4/edit
+
 ## Errores conocidos y/o funcionalidades faltantes, de haberlas.
