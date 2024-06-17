@@ -131,107 +131,104 @@ int main() {
     char *programaMain2 = NULL;
     char *argvMain2[MAX_ARGS];
     char *operador = NULL;
-
-    while (1){
+    char *EOFcheck;
+	
+	printf("Ingrese una linea de comando: ");
+	
+    while (fgets(linea, MAX_LINE_LENGTH, stdin) && strcmp(linea, "salir\n") != 0){
 	
 		for(int i = 0; i <= MAX_ARGS-1; i++) {
             argvMain1[i]=NULL;
             argvMain2[i]=NULL;
         }
-	
+		
 		operador = NULL;
         programaMain1 = NULL;
         programaMain2 = NULL;
-        
-        printf("Ingrese una linea de comando: ");
-        fgets(linea, sizeof(linea), stdin);
-	
-		if (strcmp(linea, "salir\n") == 0){
-            printf("Adios\n");
-            break;
-        } else {
-        	if (validar_linea(linea, &programaMain1, argvMain1, &programaMain2, argvMain2, &operador)) {
-            	if (operador == NULL || (strcmp(operador, "&&") == 0 || strcmp(operador, "||") == 0)) {
-					char programaPath[100];
-                    
-                    sprintf(programaPath, "/bin/%s", programaMain1);
-					
-                    pid_t pid = fork();
-                    
-                    if (pid == -1) {
-                    	exit(EXIT_FAILURE);
-                    } else if (pid == 0) {
-                    	fflush(stdout);
-                        if (execvp(programaPath, argvMain1) == -1) {
-                            perror("execvp");
-                            exit(EXIT_FAILURE);
-                        }
-                        
-                    } else {
-                        int status;
-                        if (waitpid(pid, &status, 0) == -1) {
-                            perror("waitpid");
-                            exit(EXIT_FAILURE);
-                        }
-						if (WIFEXITED(status)) {
-                        
-                        	if (operador != NULL) {
-                            	
-                            	if ((!WEXITSTATUS(status) && strcmp(operador,"&&") == 0) || 
+		
+        if(strcmp(linea,"\n") == 0){
+        	continue;
+        }
+        if (validar_linea(linea, &programaMain1, argvMain1, &programaMain2, argvMain2, &operador)) {
+			if (operador == NULL || (strcmp(operador, "&&") == 0 || strcmp(operador, "||") == 0)) {
+				char programaPath[100]; 
+				sprintf(programaPath, "/bin/%s", programaMain1);	
+				pid_t pid = fork();
+				if (pid == -1) {
+					exit(EXIT_FAILURE);
+				} else if (pid == 0) {
+					fflush(stdout);
+					if (execvp(programaPath, argvMain1) == -1) {
+						perror("execvp");
+						exit(EXIT_FAILURE);
+					}        
+				} else {
+					int status;
+					if (waitpid(pid, &status, 0) == -1) {
+						perror("waitpid");
+						exit(EXIT_FAILURE);
+					}
+					if (WIFEXITED(status)) {
+						if (operador != NULL) {
+							if ((!WEXITSTATUS(status) && strcmp(operador,"&&") == 0) || 
                                 (WEXITSTATUS(status) && strcmp(operador,"||") == 0)) {
                                     executer(programaMain2,argvMain2);
-                                }
-                            }
-                            
-                        } else {
-                            printf("Child process exited abnormally\n");
-                        }
-                    }
-                } else if (operador != NULL && strcmp(operador, "|") == 0){
+							}
+						}   
+					} else {
+						printf("Child process exited abnormally\n");
+					}
+				}
+			} else if (operador != NULL && strcmp(operador, "|") == 0){
                 	
-                	int pipefd[2];
+				int pipefd[2];
                     
-                    if (pipe(pipefd) == -1) {
-                        perror("pipe");
-                        exit(EXIT_FAILURE);
-                    }
+				if (pipe(pipefd) == -1) {
+					perror("pipe");
+					exit(EXIT_FAILURE);
+				}
 					
-					pid_t pid1 = fork();
+				pid_t pid1 = fork();
                     
-                    if (pid1 == -1) {
-                        perror("fork");
-                        exit(EXIT_FAILURE);
-                    } else if (pid1 == 0) {
-                        close(pipefd[0]);
-                        dup2(pipefd[1], STDOUT_FILENO);
-                        close(pipefd[1]);
-                        childExecuter(programaMain1, argvMain1);
-                        exit(EXIT_SUCCESS);
-                    }
-					
-					pid_t pid2 = fork();
-					
-                    if (pid2 == -1) {
-                        perror("fork");
-                        exit(EXIT_FAILURE);
-                    } else if (pid2 == 0) {
-                        close(pipefd[1]);
-                        dup2(pipefd[0], STDIN_FILENO); 
-                        close(pipefd[0]);
-                        childExecuter(programaMain2, argvMain2);
-                        exit(EXIT_SUCCESS);
-                    }
+				if (pid1 == -1) {
+					perror("fork");
+					exit(EXIT_FAILURE);
+				} else if (pid1 == 0) {
 					close(pipefd[0]);
-                    close(pipefd[1]);
-					waitpid(pid1, NULL, 0);
-                    waitpid(pid2, NULL, 0);
-                }         
-            } else {
-                printf("Formato invalido.\n");
-            }
-        }
-
+					dup2(pipefd[1], STDOUT_FILENO);
+					close(pipefd[1]);
+					childExecuter(programaMain1, argvMain1);
+					exit(EXIT_SUCCESS);
+				}
+					
+				pid_t pid2 = fork();
+					
+				if (pid2 == -1) {
+					perror("fork");
+					exit(EXIT_FAILURE);
+				} else if (pid2 == 0) {
+					close(pipefd[1]);
+					dup2(pipefd[0], STDIN_FILENO); 
+					close(pipefd[0]);
+					childExecuter(programaMain2, argvMain2);
+					exit(EXIT_SUCCESS);
+				}
+				close(pipefd[0]);
+				close(pipefd[1]);
+				waitpid(pid1, NULL, 0);
+				waitpid(pid2, NULL, 0);
+			}         
+		} else {
+			printf("Formato invalido.\n");
+		}
+		
+		printf("Ingrese una linea de comando: ");
+		fflush(stdout);
+		
     }
+    
+    printf("Adiós!\n");
+    
     return 0;
 }
 
